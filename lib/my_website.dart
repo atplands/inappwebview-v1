@@ -86,6 +86,20 @@ class _MyWebsiteState extends State<MyWebsite> {
                       await _launchWhatsApp();
                       return NavigationActionPolicy.CANCEL;
                     }
+                    // Detect Google login URL and launch in system browser
+                    if (uri.host == 'accounts.google.com') {
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                        return NavigationActionPolicy
+                            .CANCEL; // Prevent InAppWebView from loading
+                      } else {
+                        // Handle error if URL cannot be launched
+                        //print('Could not launch Google login URL: $uri');
+                        return NavigationActionPolicy
+                            .ALLOW; // Allow InAppWebView to try loading (optional)
+                      }
+                    }
                     return NavigationActionPolicy.ALLOW;
                   },
                   onLoadStop: (controller, url) async {
