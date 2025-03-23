@@ -86,6 +86,40 @@ class _MyWebsiteState extends State<MyWebsite> {
                       await _launchWhatsApp();
                       return NavigationActionPolicy.CANCEL;
                     }
+                    // Detect Google login redirect from Django
+                    if (uri.toString().contains('app=true')) {
+                      // Extract code and send to backend for verification
+                      String code = uri.queryParameters['code'] ?? '';
+                      //print("APP CODE : " + code);
+                      // Send code to your Django backend for verification
+                      try {
+                        final response = await http.post(
+                          Uri.parse(
+                              'https://cloudaiorg.com/users/oidc/google/login/verify_google_code/'), // Replace with your backend endpoint
+                          body: {'code': code},
+                        );
+
+                        if (response.statusCode == 200) {
+                          // Backend verified code, navigate to home/index page
+                          await _webViewController.loadUrl(
+                              urlRequest: URLRequest(
+                                  url: WebUri.uri(Uri.parse(
+                                      'https://cloudaiorg.com')))); // Load the index page.
+                        } else {
+                          // Backend verification failed, handle error
+                          print(
+                              'Backend verification failed: ${response.statusCode}');
+                          // Optionally show an error message to the user
+                        }
+                      } catch (e) {
+                        // Network or other error
+                        print('Error sending code to backend: $e');
+                        // Optionally show an error message to the user
+                      }
+                      return NavigationActionPolicy
+                          .CANCEL; // Prevent InAppWebView from loading
+                    }
+
                     // Detect Google login URL and launch in system browser
                     if (uri.host == 'accounts.google.com') {
                       if (await canLaunchUrl(uri)) {
